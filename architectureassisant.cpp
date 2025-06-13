@@ -8,45 +8,69 @@ architectureassistant::~architectureassistant()
 }
 void architectureassistant::manage_building_design()
 {
-    MyString building_name;
-    MyString building_type;
-    MyString location;
-    int total_floors = 0;
-
-    cout << "Enter Building Name: ";
-    cin >> building_name;   
-    cout << "Enter Building Type: ";
-    cin >> building_type;
-    cout << "Enter Location: ";
-    cin >> location;
-    cout << "Enter Total Number of Floors: ";
-    cin >> total_floors;
-
-    vector<floors*> floor_list;
-
-    for (int i = 0; i < total_floors; i++)
+    try 
     {
+        MyString building_name;
+        MyString building_type;
+        MyString location;
+        int total_floors = 0;
+
+        cout << "Enter Building Name: " << endl;
+        cin >> building_name;
+
+        cout << "Enter Building Type: " << endl;
+        cin >> building_type;
+
+        cout << "Enter Location: " << endl;
+        cin >> location;
+
+        cout << "Enter Total Number of Floors: ";
+        if (!(cin >> total_floors) || total_floors <= 0)
+        {
+            throw invalid_argument("Invalid number of floors entered. Please enter a positive integer.");
+        }
+
+        vector<floors*> floor_list;
+
+        for (int i = 0; i < total_floors; i++)
+        {
+            cout << endl;
+            cout << "--- Entering Details for Floor " << i + 1 << " ---" << endl;
+
+            floors* fl = new(nothrow) floors;
+            if (!fl) 
+            {
+                throw bad_alloc();
+            }
+
+            fl->input();
+            floor_list.push_back(fl);
+        }
+
+        
+        building b(building_name, building_type, location, floor_list);
+
         cout << endl;
-        cout << "--- Entering Details for Floor " << i + 1 << " ---" << endl;
+        cout << "--- Building Summary ---" << endl;
+        b.display_building_info();
 
-        /*floors fl;
-        fl.input();     
-        floor_list.push_back(fl);*/
-
-        floors* fl = new floors;
-        fl->input();
-        floor_list.push_back(fl);
+        float cost = b.get_building_cost();
+        cout << "Estimated Building Cost (default rate): " << cost << " units" << endl;
     }
-
-    
-    building b(building_name, building_type, location, floor_list);
-
-    cout << endl;
-    cout << "--- Building Summary ---" << endl;
-    b.display_building_info();
-
-    float cost = b.get_building_cost();
-    cout << "Estimated Building Cost (default rate): " << cost << " units" << endl;
+    catch (const invalid_argument& e)
+    {
+        cout << "Input Error: " << e.what() << endl;
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    catch (const bad_alloc& e)
+    {
+        cout << "Memory Allocation Error: " << e.what() << endl;
+    }
+    catch (const exception& e)
+    {
+        cout << "An error occurred: " << e.what() << endl;
+    }
 
 }
 void architectureassistant::manage_house_planner()
@@ -242,7 +266,8 @@ void architectureassistant::manage_smart_city()
     int choice = 0;
 
     do {
-        cout << "\n--- Smart City Planner Menu ---" << endl;
+        cout << endl;
+        cout << "--- Smart City Planner Menu ---" << endl;
         cout << "1. Add New City Zone" << endl;
         cout << "2. Add Infrastructure to Zone" << endl;
         cout << "3. Add Utility Service to Zone" << endl;
@@ -251,7 +276,8 @@ void architectureassistant::manage_smart_city()
         cout << "Enter your choice: ";
         cin >> choice;
 
-        if (choice == 1) {
+        if (choice == 1)
+        {
             MyString zone_name;
             cout << "Enter name of the new city zone: ";
             cin >> zone_name;
@@ -260,8 +286,10 @@ void architectureassistant::manage_smart_city()
             smartcity_zones.push_back(new_zone);
             cout << "City zone added successfully." << endl;
         }
-        else if (choice == 2) {
-            if (smartcity_zones.empty()) {
+        else if (choice == 2)
+        {
+            if (smartcity_zones.empty())
+            {
                 cout << "No zones available. Please add a zone first." << endl;
                 continue;
             }
@@ -270,27 +298,83 @@ void architectureassistant::manage_smart_city()
             int index;
             cin >> index;
 
-            if (index >= 0 && index < smartcity_zones.size()) {
-                MyString name, type;
-                float area;
+            if (index >= 0 && index < smartcity_zones.size())
+            {
+                int infra_choice = 0;
+                cout << "Choose Infrastructure Type to Add:" << endl;
+                cout << "1. Manual Infrastructure (Name/Type/Area)" << endl;
+                cout << "2. Building Design Simulator" << endl;
+                cout << "3. House Planning Assistant" << endl;
+                cout << "Enter your choice: ";
+                cin >> infra_choice;
 
-                cout << "Enter infrastructure name: ";
-                cin >> name;
-                cout << "Enter infrastructure type: ";
-                cin >> type;
-                cout << "Enter area covered (in sqft): ";
-                cin >> area;
+                if (infra_choice == 1)
+                {
+                    MyString name, type;
+                    float area;
 
-                infrastructure* infra = new infrastructure(name, type, area);
-                smartcity_zones[index]->add_infrastructure(infra);
-                cout << "Infrastructure added successfully." << endl;
+                    cout << "Enter infrastructure name: ";
+                    cin >> name;
+                    cout << "Enter infrastructure type: ";
+                    cin >> type;
+                    cout << "Enter area covered (in sqft): ";
+                    cin >> area;
+
+                    infrastructure* infra = new infrastructure(name, type, area);
+                    smartcity_zones[index]->add_infrastructure(infra);
+                    cout << "Infrastructure added successfully." << endl;
+                }
+                else if (infra_choice == 2)
+                {
+                    cout << endl;
+                    cout << "Launching Building Design Simulator..." << endl;
+                    manage_building_design();
+
+                    MyString name, type;
+                    float area;
+                    cout << "Enter name of the building added to zone: ";
+                    cin >> name;
+                    type = "Building";
+
+                    cout << "Enter estimated area (sqft): ";
+                    cin >> area;
+
+                    infrastructure* building_infra = new infrastructure(name, type, area);
+                    smartcity_zones[index]->add_infrastructure(building_infra);
+                    cout << "Building added as infrastructure to the zone." << endl;
+                }
+                else if (infra_choice == 3)
+                {
+                    cout << endl;
+                    cout << "Launching House Planning Assistant..." << endl;
+                    manage_house_planner();
+
+                    MyString name, type = "House";
+                    float area;
+
+                    cout << "Enter name of the house added to zone: ";
+                    cin >> name;
+                    cout << "Enter estimated area (sqft): ";
+                    cin >> area;
+
+                    infrastructure* house_infra = new infrastructure(name, type, area);
+                    smartcity_zones[index]->add_infrastructure(house_infra);
+                    cout << "House added as infrastructure to the zone." << endl;
+                }
+                else
+                {
+                    cout << "Invalid infrastructure choice!" << endl;
+                }
             }
-            else {
+            else
+            {
                 cout << "Invalid zone index!" << endl;
             }
         }
-        else if (choice == 3) {
-            if (smartcity_zones.empty()) {
+        else if (choice == 3)
+        {
+            if (smartcity_zones.empty())
+            {
                 cout << "No zones available. Please add a zone first." << endl;
                 continue;
             }
@@ -299,7 +383,8 @@ void architectureassistant::manage_smart_city()
             int index;
             cin >> index;
 
-            if (index >= 0 && index < smartcity_zones.size()) {
+            if (index >= 0 && index < smartcity_zones.size())
+            {
                 MyString utility_type;
                 float cost;
 
@@ -312,22 +397,29 @@ void architectureassistant::manage_smart_city()
                 smartcity_zones[index]->add_utility(utility);
                 cout << "Utility service added successfully." << endl;
             }
-            else {
+            else
+            {
                 cout << "Invalid zone index!" << endl;
             }
         }
-        else if (choice == 4) {
-            if (smartcity_zones.empty()) {
+        else if (choice == 4)
+        {
+            if (smartcity_zones.empty())
+            {
                 cout << "No zones to display." << endl;
             }
-            else {
-                for (int i = 0; i < smartcity_zones.size(); i++) {
-                    cout << "\n--- Zone " << i + 1 << " Summary ---" << endl;
+            else
+            {
+                for (int i = 0; i < smartcity_zones.size(); i++)
+                {
+                    cout << endl;
+                    cout << "--- Zone " << i + 1 << " Summary ---" << endl;
                     smartcity_zones[i]->display_zone_summary();
                 }
             }
         }
-        else if (choice != 0) {
+        else if (choice != 0)
+        {
             cout << "Invalid choice. Try again." << endl;
         }
 
@@ -344,7 +436,7 @@ void architectureassistant::run()
         cout << "--- Architecture Assistant Main Menu ---" << endl;
         cout << "1. Building Design Simulator" << endl;
         cout << "2. House Planning Assistant" << endl;
-        cout << "4. Smart City Planner" << endl;
+        cout << "3. Smart City Planner" << endl;
         cout << "0. Exit" << endl;
         cout << "Enter your choice: " << endl;
         cin >> choice;
@@ -352,22 +444,13 @@ void architectureassistant::run()
         if (choice == 1)
         {
             manage_building_design();
-            //int cost_choice = 0;
-            //cout << "Do you want it's estimated cost : " << endl;
-            //cout << "Yes(1)   No(0)" << endl;
-            //cin >> cost_choice;
-
-            //if (cost_choice == 1)
-            //{
-            //    cout << "The estimated cost for your building is " /*<< building_cost_estimator()*/ << endl;
-            //}
 
         }
         else if (choice == 2)
         {
             manage_house_planner();
         }
-        else if (choice == 4)
+        else if (choice == 3)
         {
             manage_smart_city();
         }
