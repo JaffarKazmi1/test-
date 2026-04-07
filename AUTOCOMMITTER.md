@@ -1,1 +1,1 @@
-The heart of a shrimp is located in its head.
+Cows have best friends and get stressed when separated.
